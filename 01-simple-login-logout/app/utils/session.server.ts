@@ -8,7 +8,7 @@ import { createCookieSessionStorage } from "@remix-run/node";
  * How things work with remix sessions:
  * 1. You create an instance of createCookieSessionStorage 
  *    - this is is equivalent to adding 1 cookie key entry.
- *    - const getSession = `createCookieSessionStorage({cookie: 'my_cookie_key'})`
+ *    - const {getSession} = `createCookieSessionStorage({cookie: 'my_cookie_key'})`
  * 2. Adding a value(s) to the my_cookie_key entry
  *      // Login.tsx
  *      let session = await getSession(request.headers.get("Cookie"))
@@ -70,7 +70,7 @@ const { getSession, commitSession, destroySession } =
       name: COOKIE_KEY,
       // all of these are optional
       httpOnly: true,
-      maxAge: COOKIE_EXPIRATION_TIME_IN_SECONDS, // max-age takes precedent over 'expires'. Hover over `maxAge` prop for details
+      // maxAge: COOKIE_EXPIRATION_TIME_IN_SECONDS, // max-age takes precedent over 'expires'. Hover over `maxAge` prop for details
       path: "/",
       sameSite: "lax",
       // secrets: ["s3cret1"],

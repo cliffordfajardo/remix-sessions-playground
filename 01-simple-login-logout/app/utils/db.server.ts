@@ -18,6 +18,7 @@ export const supabaseClient = createClient(supabaseUrl, supabaseKey);
  */
 export const hasAuthSession = async (request: Request) => {
   let session = await getSession(request.headers.get("Cookie"));
-  if (!session.has("access_token")) throw Error("No session");
-  supabaseClient.auth.setAuth(session.get("access_token"));
+  if (!session.has("sb_access_token")) throw Error("No session");
+  
+  // supabaseClient.auth.setAuth(session.get(""));
 };

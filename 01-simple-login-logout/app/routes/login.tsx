@@ -1,4 +1,4 @@
-import { redirect, type ActionFunction, type V2_MetaFunction } from "@remix-run/node";
+import { redirect, type ActionFunction, type V2_MetaFunction, LoaderFunction } from "@remix-run/node";
 import { Form } from "@remix-run/react";
 import { supabaseClient } from "~/utils/db.server";
 import { commitSession, getSession } from "~/utils/session.server";
@@ -7,13 +7,25 @@ export const meta: V2_MetaFunction = () => {
     return [ { title: "Login" },];
 };
 
+const FIVE_MINUTES_IN_SECONDS = 60 * 5;
+
+export const loader:LoaderFunction = async ({request}) => {
+    let session = await getSession(request.headers.get("Cookie"));
+    const isUserAuthenticated = session.has("sb_access_token")
+    
+    if(isUserAuthenticated){
+        throw redirect(`/`);
+    }
+    return {}
+}
+
 export const action:ActionFunction = async ({request}) => {
     const formData = await request.formData();
     const loginFormData = Object.fromEntries(formData) as {
         email: string;
         password: string;
     }
-
+    
     // TODO: Log the user in with their credentials with our fake AuthClient
     // login using the credentials
     const { data: {user, session: supabaseSession}, error } = await supabaseClient.auth.signinWithPassword({
@@ -27,7 +39,7 @@ export const action:ActionFunction = async ({request}) => {
         session.set("sb_access_token", supabaseSession.access_token);
         session.set("sb_accepted_tos", 'true');
         const updatedCookie = await commitSession(session, {
-            expires: new Date(Date.now() + 60),
+            maxAge: FIVE_MINUTES_IN_SECONDS,
         });
         
         return redirect("/", {
