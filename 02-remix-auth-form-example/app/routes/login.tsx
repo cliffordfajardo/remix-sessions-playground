@@ -1,59 +1,25 @@
-import { redirect, type ActionFunction, type V2_MetaFunction, LoaderFunction } from "@remix-run/node";
 import { Form } from "@remix-run/react";
-import { supabaseClient } from "~/utils/db.server";
-import { commitSession, getSession } from "~/utils/session.server";
+import { type ActionFunction, type V2_MetaFunction, type LoaderFunction } from "@remix-run/node";
+import { authenticator } from "~/@remix-auth-form-example/auth.server";
 
 export const meta: V2_MetaFunction = () => {
-    return [ { title: "Login" },];
+    return [{ title: "Login" },];
 };
 
-const FIVE_MINUTES_IN_SECONDS = 60 * 5;
+export const loader: LoaderFunction = async ({ request }) => {
+    const user = await authenticator.isAuthenticated(request, {
+        successRedirect: '/'
+    })
 
-export const loader:LoaderFunction = async ({request}) => {
-    let session = await getSession(request.headers.get("Cookie"));
-    const isUserAuthenticated = session.has("sb_access_token")
-    
-    if(isUserAuthenticated){
-        throw redirect(`/`);
-    }
-    return {}
+    return {user}
 }
 
-export const action:ActionFunction = async ({request}) => {
-    const formData = await request.formData();
-    const loginFormData = Object.fromEntries(formData) as {
-        email: string;
-        password: string;
-    }
+export const action: ActionFunction = async ({ request }) => {
     
-    // TODO: Log the user in with their credentials with our fake AuthClient
-    // login using the credentials
-    const { data: {user, session: supabaseSession}, error } = await supabaseClient.auth.signinWithPassword({
-        email: loginFormData.email,
-        password: loginFormData.password,
+    return await authenticator.authenticate("form", request, {
+        successRedirect: "/",
     });
 
-    // if user exists, create session for them
-    if(user){
-        let session = await getSession(request.headers.get("Cookie"));
-        session.set("sb_access_token", supabaseSession.access_token);
-        session.set("user", {name: 'clifford', email: loginFormData.email})
-        const updatedCookie = await commitSession(session, {
-            maxAge: FIVE_MINUTES_IN_SECONDS,
-        });
-        
-        return redirect("/", {
-            headers: {
-                "Set-Cookie": updatedCookie,
-            },
-        });
-    }
-
-    // TODO: create mock code; probably just use a JSON file on disk so we don't deal with depdenedncies..
-
-    
-
-    return { user, error };
 }
 
 export default function Index() {
@@ -63,7 +29,7 @@ export default function Index() {
 
 
             {/* -------------------- LOGIN FORM --------------------- */}
-            <Form 
+            <Form
                 method="POST"
                 action="/login"
                 className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
@@ -92,7 +58,7 @@ export default function Index() {
                         placeholder="********"
                     />
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                     <button
                         className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"

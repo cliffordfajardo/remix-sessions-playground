@@ -31,6 +31,7 @@ import { createCookieSessionStorage } from "@remix-run/node";
 type SessionData = {
   sb_access_token: string;
   sb_accepted_tos: string;
+  user: {name: string, email: string; }
 };
 
 /**
@@ -72,7 +73,7 @@ const { getSession, commitSession, destroySession } =
       httpOnly: true,
       // maxAge: COOKIE_EXPIRATION_TIME_IN_SECONDS, // max-age takes precedent over 'expires'. Hover over `maxAge` prop for details
       path: "/",
-      sameSite: "lax",
+      sameSite: "lax", //this helps with CSRF
       // secrets: ["s3cret1"],
       secure: process.env.NODE_ENV === "production",
     },
